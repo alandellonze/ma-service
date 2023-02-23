@@ -1,0 +1,14 @@
+spring:
+  main:
+    banner-mode: log
+
+# logging
+logging:
+  file.name: /ma/logs/ma-service.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5p) %-30t{30} %blue(%-40logger{40}) %m%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%-5p) %-30t{30} %blue(%-40logger{40}) %m%n%wEx"
+  level:
+    it.ade.ma: DEBUG
+    org.hibernate: ERROR
+    org.springframework.web: INFO

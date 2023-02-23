@@ -1,0 +1,69 @@
+# server
+server:
+  port: 8027
+  compression.enabled: true
+  tomcat.threads:
+    min-spare: 5
+    max: 50
+  error.include-message: always
+
+# spring
+spring:
+  # application
+  application:
+    name: @project.name@
+    version: @project.version@
+    description: @project.description@
+
+  # datasource
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5427/ma?currentSchema=public
+    username: postgres
+    password: postgres
+    hikari:
+      minimum-idle: 1 # default: 10
+      maximum-pool-size: 2 # default: 10
+      idle-timeout: 120000 # default: 600000
+
+  # jpa
+  jpa:
+    open-in-view: false
+    hibernate.naming.physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties.hibernate:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+      format_sql: false
+    show-sql: false
+
+  # mail
+  mail:
+    host: "smtp.sendgrid.net"
+    port: 587
+    username: "apikey"
+    password: "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"
+
+# springdoc
+springdoc.swagger-ui.url: /v3/api-docs.yaml
+
+# ma
+ma:
+  # metal-archives website
+  metal-archives:
+    url: "https://www.metal-archives.com/band/discography/id/%s/tab/all"
+
+  # path
+  path:
+    root: "/Volumes/Crucial X6/Music"
+    covers: "/COVERS"
+    mp3: "/MP3"
+    scans: "/SCANS"
+    tmp:
+      covers: "?"
+      mp3: "/- TMP/2 - LISTEN"
+      scans: "?"
+
+  # mail
+  mail:
+    from: "postmaster@sandbox8ef10d5c5b5f462baeef1d00943fa340.mailgun.org"
+    fromName: "Metal Archives"
+    to: "alan.dellonze@gmail.com"
