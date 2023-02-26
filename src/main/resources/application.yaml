@@ -53,13 +53,13 @@ ma:
 
   # path
   path:
-    root: "/Volumes/Crucial X6/Music"
-    covers: "/COVERS"
-    mp3: "/MP3"
-    scans: "/SCANS"
+    root: "/Volumes/Crucial X6/Music/"
+    covers: "COVERS/"
+    mp3: "MP3/"
+    scans: "SCANS/"
     tmp:
       covers: "?"
-      mp3: "/- TMP/2 - LISTEN"
+      mp3: "- TMP/2 - LISTEN/"
       scans: "?"
 
   # mail

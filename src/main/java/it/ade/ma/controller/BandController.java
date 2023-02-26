@@ -4,7 +4,10 @@ import it.ade.ma.entities.Band;
 import it.ade.ma.repository.BandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -20,12 +23,6 @@ public class BandController {
     @GetMapping
     public ResponseEntity<List<Band>> findAll(@RequestParam(required = false) String name) {
         return ok().body(bandRepository.findAll(name));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<List<Band>> findOne(@PathVariable long id) {
-        // TODO get discography differences
-        return ok().build();
     }
 
 }
