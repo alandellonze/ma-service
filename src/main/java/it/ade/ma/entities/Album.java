@@ -5,7 +5,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 
-import static it.ade.ma.entities.Status.NONE;
+import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Getter
@@ -13,6 +13,7 @@ import static it.ade.ma.entities.Status.NONE;
 public class Album {
 
     @Id
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
     @ManyToOne
@@ -29,6 +30,6 @@ public class Album {
     private String maName;
 
     @Enumerated
-    private Status status = NONE;
+    private Status status;
 
 }

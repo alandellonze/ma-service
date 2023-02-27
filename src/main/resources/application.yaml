@@ -50,17 +50,17 @@ ma:
   # metal-archives website
   metal-archives:
     url: "https://www.metal-archives.com/band/discography/id/%s/tab/all"
+    cacheTTL: 300000 # 5 minutes
 
   # path
   path:
     root: "/Volumes/Crucial X6/Music/"
-    covers: "COVERS/"
     mp3: "MP3/"
+    mp3Tmp: "- TMP/2 - LISTEN/"
+    covers: "COVERS/"
+    coversTmp: "COVERS/"
     scans: "SCANS/"
-    tmp:
-      covers: "?"
-      mp3: "- TMP/2 - LISTEN/"
-      scans: "?"
+    scansTmp: "SCANS/"
 
   # mail
   mail:

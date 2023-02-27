@@ -26,23 +26,27 @@ public class PathService {
         return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getMp3() + "/" + normalize(bandName));
     }
 
-    public String tmpMp3(AlbumDTO album) {
-        return pathConfiguration.getRoot() + pathConfiguration.getTmpMp3() + normalize(album.getBandName()) + " - " + generateAlbumName(album);
+    public String mp3Tmp(AlbumDTO album) {
+        return pathConfiguration.getRoot() + pathConfiguration.getMp3Tmp() + normalize(album.getBandName()) + " - " + generateAlbumName(album);
     }
 
-    private Stream<String> tmpMp3Folder(String bandName) {
+    private Stream<String> mp3TmpFolder(String bandName) {
         String normalizeBandName = normalize(bandName) + " - ";
-        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getTmpMp3())
+        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getMp3Tmp())
                 .filter(f -> f.startsWith(normalizeBandName))
                 .map(p -> p.substring(normalizeBandName.length()));
     }
 
     public List<String> mp3All(String bandName) {
-        return concatStream(mp3Folder(bandName), tmpMp3Folder(bandName));
+        return concatStream(mp3Folder(bandName), mp3TmpFolder(bandName));
     }
 
     public String cover(AlbumDTO album) {
         return pathConfiguration.getRoot() + pathConfiguration.getCovers() + normalize(album.getBandName()) + "/" + generateCoverName(album);
+    }
+
+    public String coverTmp(AlbumDTO album) {
+        return pathConfiguration.getRoot() + pathConfiguration.getCoversTmp() + normalize(album.getBandName()) + "/" + generateCoverName(album);
     }
 
     private Stream<String> coversFolder(String bandName) {
@@ -56,6 +60,10 @@ public class PathService {
 
     public String scan(AlbumDTO album) {
         return pathConfiguration.getRoot() + pathConfiguration.getScans() + normalize(album.getBandName()) + "/" + generateAlbumName(album);
+    }
+
+    public String scanTmp(AlbumDTO album) {
+        return pathConfiguration.getRoot() + pathConfiguration.getScansTmp() + normalize(album.getBandName()) + "/" + generateAlbumName(album);
     }
 
     private Stream<String> scansFolder(String bandName) {

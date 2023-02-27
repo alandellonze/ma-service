@@ -65,7 +65,7 @@ public class DiffService {
             if (exist(path)) {
                 album.setStatusMP3(PRESENT);
             } else {
-                path = pathService.tmpMp3(album);
+                path = pathService.mp3Tmp(album);
                 album.setStatusMP3(exist(path) ? TMP : NOT_PRESENT);
             }
 
@@ -74,8 +74,8 @@ public class DiffService {
             if (exist(path)) {
                 album.setStatusCover(PRESENT);
             } else {
-                // TODO looks into covers tmp
-                album.setStatusCover(NOT_PRESENT);
+                path = pathService.coverTmp(album);
+                album.setStatusCover(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // scans
@@ -83,8 +83,8 @@ public class DiffService {
             if (exist(path)) {
                 album.setStatusScans(PRESENT);
             } else {
-                // TODO looks into scans tmp
-                album.setStatusScans(NOT_PRESENT);
+                path = pathService.scanTmp(album);
+                album.setStatusScans(exist(path) ? TMP : NOT_PRESENT);
             }
         });
     }
@@ -93,7 +93,7 @@ public class DiffService {
         DiffResponse diffResponse = new DiffResponse();
 
         // diffs from web
-        diffResponse.setAlbums(diffWeb(band.getMaKey(), albums));
+        diffResponse.setAlbums(diffWeb(band, albums));
 
         // diffs mp3
         diffResponse.setMp3(diffMP3(band.getName(), albums));
@@ -107,11 +107,11 @@ public class DiffService {
         return diffResponse;
     }
 
-    private DiffResult<AlbumDTO> diffWeb(Long maKey, List<AlbumDTO> albums) {
-        log.info("diffWeb({}, {})", maKey, albums.size());
+    private DiffResult<AlbumDTO> diffWeb(Band band, List<AlbumDTO> albums) {
+        log.info("diffWeb({}, {})", band, albums.size());
 
         // get album from web
-        List<AlbumDTO> albumsFromWeb = isNull(maKey) ? emptyList() : ripperService.execute(maKey);
+        List<AlbumDTO> albumsFromWeb = ripperService.execute(band.getId(), band.getMaKey());
 
         // diff album
         return albumDiffService.execute(albums, albumsFromWeb);

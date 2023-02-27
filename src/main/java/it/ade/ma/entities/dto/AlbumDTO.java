@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
+import static it.ade.ma.entities.Status.NONE;
 import static java.lang.String.format;
 
 @Data
@@ -28,12 +29,14 @@ public class AlbumDTO {
     private Status statusCover;
     private Status statusScans;
 
-    public AlbumDTO(Integer position, String type, Integer typeCount, String name, Integer year) {
+    public AlbumDTO(Long bandId, Integer position, String type, Integer typeCount, String name, Integer year) {
+        this.bandId = bandId;
         this.position = position;
         this.type = type;
         this.typeCount = typeCount;
         this.name = name;
         this.year = year;
+        this.status = NONE;
     }
 
     public boolean isFullyCustom() {

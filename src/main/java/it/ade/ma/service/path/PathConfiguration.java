@@ -11,12 +11,11 @@ public class PathConfiguration {
 
     private String root;
 
-    private String covers;
     private String mp3;
+    private String mp3Tmp;
+    private String covers;
+    private String coversTmp;
     private String scans;
-
-    private String tmpCovers;
-    private String tmpMp3;
-    private String tmpScans;
+    private String scansTmp;
 
 }
