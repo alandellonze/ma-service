@@ -2,6 +2,7 @@ package it.ade.ma.service.diff;
 
 import it.ade.ma.entities.Band;
 import it.ade.ma.entities.dto.AlbumDTO;
+import it.ade.ma.entities.dto.ItemDiffDTO;
 import it.ade.ma.repository.BandRepository;
 import it.ade.ma.service.AlbumService;
 import it.ade.ma.service.diff.model.DiffResponse;
@@ -17,8 +18,8 @@ import java.util.Optional;
 
 import static it.ade.ma.entities.Status.*;
 import static it.ade.ma.service.path.FileService.exist;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.isNull;
+import static it.ade.ma.service.path.PathService.generateAlbumName;
+import static it.ade.ma.service.path.PathService.generateCoverName;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -31,11 +32,11 @@ public class DiffService {
     private final AlbumService albumService;
     private final RipperService ripperService;
     private final AlbumDiffService albumDiffService;
-    private final StringDiffService stringDiffService;
+    private final ItemDiffService itemDiffService;
     private final PathService pathService;
 
-    public DiffResponse diff(long bandId) {
-        log.info("diff({})", bandId);
+    public DiffResponse getDiff(long bandId) {
+        log.info("getDiff({})", bandId);
 
         // get Band from db
         Optional<Band> bandOpt = bandRepository.findById(bandId);
@@ -61,29 +62,29 @@ public class DiffService {
 
         albums.forEach(album -> {
             // mp3 + tmp
-            String path = pathService.mp3(album);
+            String path = pathService.mp3Name(album);
             if (exist(path)) {
                 album.setStatusMP3(PRESENT);
             } else {
-                path = pathService.mp3Tmp(album);
+                path = pathService.mp3TmpName(album);
                 album.setStatusMP3(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // cover + tmp
-            path = pathService.cover(album);
+            path = pathService.coverName(album);
             if (exist(path)) {
                 album.setStatusCover(PRESENT);
             } else {
-                path = pathService.coverTmp(album);
+                path = pathService.coverTmpName(album);
                 album.setStatusCover(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // scans
-            path = pathService.scan(album);
+            path = pathService.scansName(album);
             if (exist(path)) {
                 album.setStatusScans(PRESENT);
             } else {
-                path = pathService.scanTmp(album);
+                path = pathService.scansTmpName(album);
                 album.setStatusScans(exist(path) ? TMP : NOT_PRESENT);
             }
         });
@@ -117,50 +118,55 @@ public class DiffService {
         return albumDiffService.execute(albums, albumsFromWeb);
     }
 
-    private DiffResult<String> diffMP3(String bandName, List<AlbumDTO> albums) {
+    private DiffResult<ItemDiffDTO> diffMP3(String bandName, List<AlbumDTO> albums) {
         log.info("diffMP3({}, {})", bandName, albums.size());
 
         // convert album to mp3 names
-        List<String> albumsToString = albums.stream()
-                .map(PathService::generateAlbumName)
-                .sorted().collect(toList());
+        List<ItemDiffDTO> albumsToString = albums.stream()
+                .map(a -> new ItemDiffDTO(a.getId(), generateAlbumName(a)))
+                .collect(toList());
 
         // get mp3 list from disk
-        List<String> mp3s = pathService.mp3All(bandName);
+        List<ItemDiffDTO> mp3s = pathService.mp3sByBand(bandName)
+                .map(a -> new ItemDiffDTO(null, a))
+                .collect(toList());
 
         // diff mp3
-        return stringDiffService.execute(albumsToString, mp3s);
+        return itemDiffService.execute(albumsToString, mp3s);
     }
 
-    private DiffResult<String> diffCovers(String bandName, List<AlbumDTO> albums) {
+    private DiffResult<ItemDiffDTO> diffCovers(String bandName, List<AlbumDTO> albums) {
         log.info("diffCovers({}, {})", bandName, albums.size());
 
         // convert album to cover names
-        List<String> albumsToString = albums.stream()
-                .map(PathService::generateCoverName)
-                .sorted().collect(toList());
+        List<ItemDiffDTO> albumsToString = albums.stream()
+                .map(a -> new ItemDiffDTO(a.getId(), generateCoverName(a)))
+                .collect(toList());
 
         // get cover files from disk
-        List<String> covers = pathService.coversAll(bandName);
+        List<ItemDiffDTO> covers = pathService.coversByBand(bandName)
+                .map(a -> new ItemDiffDTO(null, a))
+                .collect(toList());
 
         // diff covers
-        return stringDiffService.execute(albumsToString, covers);
+        return itemDiffService.execute(albumsToString, covers);
     }
 
-    private DiffResult<String> diffScans(String bandName, List<AlbumDTO> albums) {
+    private DiffResult<ItemDiffDTO> diffScans(String bandName, List<AlbumDTO> albums) {
         log.info("diffScans({}, {})", bandName, albums.size());
 
         // convert album to scans names
-        List<String> albumsToString = albums.stream()
-                .map(PathService::generateAlbumName)
-                .sorted()
+        List<ItemDiffDTO> albumsToString = albums.stream()
+                .map(a -> new ItemDiffDTO(a.getId(), generateAlbumName(a)))
                 .collect(toList());
 
         // get scan files from disk
-        List<String> scans = pathService.scansAll(bandName);
+        List<ItemDiffDTO> scans = pathService.scansByBand(bandName)
+                .map(a -> new ItemDiffDTO(null, a))
+                .collect(toList());
 
         // diff scans
-        return stringDiffService.execute(albumsToString, scans);
+        return itemDiffService.execute(albumsToString, scans);
     }
 
 }

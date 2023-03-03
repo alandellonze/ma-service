@@ -1,15 +1,16 @@
 package it.ade.ma.service.diff;
 
+import it.ade.ma.entities.dto.ItemDiffDTO;
 import it.ade.ma.service.diff.model.DiffResult;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class StringDiffService extends AbstractDiffService<String> {
+public class ItemDiffService extends AbstractDiffService<ItemDiffDTO> {
 
     @Override
-    protected void emptyAction(DiffResult<String> diffResult, List<String> original) {
+    protected void emptyAction(DiffResult<ItemDiffDTO> diffResult, List<ItemDiffDTO> original) {
         minusAction(diffResult, original);
     }
 

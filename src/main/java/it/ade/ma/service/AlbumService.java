@@ -21,6 +21,10 @@ public class AlbumService {
 
     private final AlbumRepository albumRepository;
 
+    public AlbumDTO findById(long albumId) {
+        return convert(albumRepository.findById(albumId).orElseThrow());
+    }
+
     public List<AlbumDTO> findAllByBandId(long bandId) {
         return albumRepository.findAllByBandIdOrderByPosition(bandId)
                 .stream().map(this::convert).collect(toList());

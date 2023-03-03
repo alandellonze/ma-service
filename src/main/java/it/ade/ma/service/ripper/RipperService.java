@@ -12,6 +12,7 @@ import java.util.*;
 import static it.ade.ma.configuration.CacheConfiguration.CACHE_NAME;
 import static it.ade.ma.service.ripper.AlbumTypeService.calculateCount;
 import static it.ade.ma.service.ripper.AlbumTypeService.normalize;
+import static java.lang.Integer.parseInt;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.text.WordUtils.capitalize;
@@ -27,11 +28,21 @@ public class RipperService {
     public List<AlbumDTO> execute(long bandId, Long bandMAKey) {
         log.info("execute({}, {})", bandId, bandMAKey);
 
-        // empty list when the MA key is not present
+        // return an empty list when the MA key is not present
         if (isNull(bandMAKey)) {
             return emptyList();
         }
 
+        // try to rip from the website
+        try {
+            return rip(bandId, bandMAKey);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return emptyList();
+        }
+    }
+
+    private List<AlbumDTO> rip(long bandId, Long bandMAKey) {
         // retrieve the album list from the web page
         List<WebPageAlbum> webPageAlbums = webPageContentService.parsePage(bandMAKey);
 
@@ -55,12 +66,11 @@ public class RipperService {
             String name = capitalize(webPageAlbum.getName());
 
             // convert year
-            Integer year = Integer.parseInt(webPageAlbum.getYear());
+            Integer year = parseInt(webPageAlbum.getYear());
 
             // add to the list
             albums.add(new AlbumDTO(bandId, i + 1, type, typeCount, name, year));
         }
-
         return albums;
     }
 

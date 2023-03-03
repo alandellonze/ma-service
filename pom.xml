@@ -10,7 +10,7 @@
     </parent>
     <groupId>it.ade.ma</groupId>
     <artifactId>ma-service</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
     <name>${project.artifactId}</name>
     <description>Metal Archives Service</description>
 
@@ -67,6 +67,13 @@
             <groupId>io.github.java-diff-utils</groupId>
             <artifactId>java-diff-utils</artifactId>
             <version>4.12</version>
+        </dependency>
+
+        <!-- MP3 -->
+        <dependency>
+            <groupId>com.mpatric</groupId>
+            <artifactId>mp3agic</artifactId>
+            <version>0.9.1</version>
         </dependency>
 
         <!-- UTILS -->
