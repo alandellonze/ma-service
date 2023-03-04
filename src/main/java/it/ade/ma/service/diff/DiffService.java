@@ -62,29 +62,29 @@ public class DiffService {
 
         albums.forEach(album -> {
             // mp3 + tmp
-            String path = pathService.mp3Name(album);
+            String path = pathService.mp3Path(album);
             if (exist(path)) {
                 album.setStatusMP3(PRESENT);
             } else {
-                path = pathService.mp3TmpName(album);
+                path = pathService.mp3TmpPath(album);
                 album.setStatusMP3(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // cover + tmp
-            path = pathService.coverName(album);
+            path = pathService.coverPath(album);
             if (exist(path)) {
                 album.setStatusCover(PRESENT);
             } else {
-                path = pathService.coverTmpName(album);
+                path = pathService.coverTmpPath(album);
                 album.setStatusCover(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // scans
-            path = pathService.scansName(album);
+            path = pathService.scansPath(album);
             if (exist(path)) {
                 album.setStatusScans(PRESENT);
             } else {
-                path = pathService.scansTmpName(album);
+                path = pathService.scansTmpPath(album);
                 album.setStatusScans(exist(path) ? TMP : NOT_PRESENT);
             }
         });
@@ -124,7 +124,7 @@ public class DiffService {
         // convert album to mp3 names
         List<ItemDiffDTO> albumsToString = albums.stream()
                 .map(a -> new ItemDiffDTO(a.getId(), generateAlbumName(a)))
-                .collect(toList());
+                .sorted().collect(toList());
 
         // get mp3 list from disk
         List<ItemDiffDTO> mp3s = pathService.mp3sByBand(bandName)
@@ -141,7 +141,7 @@ public class DiffService {
         // convert album to cover names
         List<ItemDiffDTO> albumsToString = albums.stream()
                 .map(a -> new ItemDiffDTO(a.getId(), generateCoverName(a)))
-                .collect(toList());
+                .sorted().collect(toList());
 
         // get cover files from disk
         List<ItemDiffDTO> covers = pathService.coversByBand(bandName)
@@ -158,7 +158,7 @@ public class DiffService {
         // convert album to scans names
         List<ItemDiffDTO> albumsToString = albums.stream()
                 .map(a -> new ItemDiffDTO(a.getId(), generateAlbumName(a)))
-                .collect(toList());
+                .sorted().collect(toList());
 
         // get scan files from disk
         List<ItemDiffDTO> scans = pathService.scansByBand(bandName)

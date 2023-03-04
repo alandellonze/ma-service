@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDiffDTO {
+public class ItemDiffDTO implements Comparable<ItemDiffDTO> {
 
     private Long albumId;
     private String name;
@@ -26,6 +26,11 @@ public class ItemDiffDTO {
         int result = super.hashCode();
         result = 31 * result + name.hashCode();
         return result;
+    }
+
+    @Override
+    public int compareTo(ItemDiffDTO o) {
+        return name.compareTo(o.name);
     }
 
     @Override

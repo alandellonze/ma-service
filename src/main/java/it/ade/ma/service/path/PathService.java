@@ -4,13 +4,11 @@ import it.ade.ma.entities.dto.AlbumDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 import static it.ade.ma.service.path.FileService.concatAndSort;
 import static it.ade.ma.service.path.FileService.getFolderContent;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 
 @Component
 @RequiredArgsConstructor
@@ -18,11 +16,11 @@ public class PathService {
 
     private final PathConfiguration pathConfiguration;
 
-    public String mp3Name(AlbumDTO albumDTO) {
+    public String mp3Path(AlbumDTO albumDTO) {
         return pathConfiguration.getRoot() + pathConfiguration.getMp3() + normalize(albumDTO.getBandName()) + "/" + generateAlbumName(albumDTO);
     }
 
-    public String mp3TmpName(AlbumDTO albumDTO) {
+    public String mp3TmpPath(AlbumDTO albumDTO) {
         return pathConfiguration.getRoot() + pathConfiguration.getMp3Tmp() + normalize(albumDTO.getBandName()) + " - " + generateAlbumName(albumDTO);
     }
 
@@ -41,16 +39,20 @@ public class PathService {
                 .map(p -> p.substring(normalizeBandName.length()));
     }
 
-    public List<String> mp3sByAlbum(AlbumDTO albumDTO) {
-        return getFolderContent(mp3Name(albumDTO), false).collect(toList());
+    public Stream<String> mp3sByAlbum(AlbumDTO albumDTO) {
+        return concatAndSort(getFolderContent(mp3Path(albumDTO), false), getFolderContent(mp3TmpPath(albumDTO), false));
     }
 
     public String coverName(AlbumDTO albumDTO) {
-        return pathConfiguration.getRoot() + pathConfiguration.getCovers() + normalize(albumDTO.getBandName()) + "/" + generateCoverName(albumDTO);
+        return normalize(albumDTO.getBandName()) + "/" + generateCoverName(albumDTO);
     }
 
-    public String coverTmpName(AlbumDTO albumDTO) {
-        return pathConfiguration.getRoot() + pathConfiguration.getCoversTmp() + normalize(albumDTO.getBandName()) + "/" + generateCoverName(albumDTO);
+    public String coverPath(AlbumDTO albumDTO) {
+        return pathConfiguration.getRoot() + pathConfiguration.getCovers() + coverName(albumDTO);
+    }
+
+    public String coverTmpPath(AlbumDTO albumDTO) {
+        return pathConfiguration.getRoot() + pathConfiguration.getCoversTmp() + coverName(albumDTO);
     }
 
     public Stream<String> coversByBand(String bandName) {
@@ -62,11 +64,11 @@ public class PathService {
         return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getCovers() + "/" + normalize(bandName));
     }
 
-    public String scansName(AlbumDTO albumDTO) {
+    public String scansPath(AlbumDTO albumDTO) {
         return pathConfiguration.getRoot() + pathConfiguration.getScans() + normalize(albumDTO.getBandName()) + "/" + generateAlbumName(albumDTO);
     }
 
-    public String scansTmpName(AlbumDTO albumDTO) {
+    public String scansTmpPath(AlbumDTO albumDTO) {
         return pathConfiguration.getRoot() + pathConfiguration.getScansTmp() + normalize(albumDTO.getBandName()) + "/" + generateAlbumName(albumDTO);
     }
 

@@ -3,6 +3,7 @@ package it.ade.ma.service.mp3;
 import com.mpatric.mp3agic.Mp3File;
 import it.ade.ma.entities.dto.AlbumDTO;
 import it.ade.ma.entities.dto.MP3DTO;
+import it.ade.ma.entities.dto.MP3FolderDTO;
 import it.ade.ma.service.AlbumService;
 import it.ade.ma.service.path.PathService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
 
@@ -26,33 +28,39 @@ public class MP3Service {
 
     private final MP3Util mp3Util;
 
-    @SneakyThrows
-    public List<MP3DTO> findAll(long albumId) {
-        log.info("findAll({})", albumId);
+    public MP3FolderDTO loadFolder(long albumId) {
+        log.info("loadFolder({})", albumId);
 
-        // get album
+        // get the album
         AlbumDTO albumDTO = albumService.findById(albumId);
         log.debug("{}", albumDTO);
 
         // get all the mp3 on the album folder
-        List<String> mp3sByAlbum = pathService.mp3sByAlbum(albumDTO);
-        log.debug("for '{}' {} mp3s found", albumDTO, mp3sByAlbum.size());
+        Stream<String> mp3sByAlbum = pathService.mp3sByAlbum(albumDTO);
 
-        // convert
+        // convert and add to the album
         List<MP3DTO> mp3DTOs = new ArrayList<>();
-        for (String mp3 : mp3sByAlbum) {
-            Mp3File mp3File = new Mp3File(mp3);
+        mp3sByAlbum.forEachOrdered(mp3 -> mp3DTOs.add(convert(mp3)));
+        log.debug("for '{}' {} mp3s found", albumDTO, mp3DTOs.size());
 
-            // debug
-            mp3Util.debug(mp3File);
+        // generate the cover path
+        String cover = pathService.coverName(albumDTO);
 
-            // add to list
-            mp3DTOs.add(convert(mp3File));
-        }
-        return mp3DTOs;
+        return new MP3FolderDTO(albumDTO, mp3DTOs, cover);
     }
 
     // UTIL
+
+    @SneakyThrows
+    private MP3DTO convert(String mp3) {
+        Mp3File mp3File = new Mp3File(mp3);
+
+        // debug
+        mp3Util.debug(mp3File);
+
+        // add to list
+        return convert(mp3File);
+    }
 
     private MP3DTO convert(Mp3File mp3File) {
         MP3DTO mp3DTO = new MP3DTO();
