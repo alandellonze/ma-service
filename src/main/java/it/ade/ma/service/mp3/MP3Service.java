@@ -5,15 +5,16 @@ import it.ade.ma.entities.dto.AlbumDTO;
 import it.ade.ma.entities.dto.MP3DTO;
 import it.ade.ma.entities.dto.MP3FolderDTO;
 import it.ade.ma.service.AlbumService;
-import it.ade.ma.service.path.PathService;
+import it.ade.ma.service.path.CoversPathService;
+import it.ade.ma.service.path.MP3PathService;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 import static org.springframework.beans.BeanUtils.copyProperties;
 
@@ -23,8 +24,8 @@ import static org.springframework.beans.BeanUtils.copyProperties;
 public class MP3Service {
 
     private final AlbumService albumService;
-
-    private final PathService pathService;
+    private final MP3PathService mp3PathService;
+    private final CoversPathService coversPathService;
 
     private final MP3Util mp3Util;
 
@@ -35,31 +36,50 @@ public class MP3Service {
         AlbumDTO albumDTO = albumService.findById(albumId);
         log.debug("{}", albumDTO);
 
-        // get all the mp3 on the album folder
-        Stream<String> mp3sByAlbum = pathService.mp3sByAlbum(albumDTO);
-
-        // convert and add to the album
-        List<MP3DTO> mp3DTOs = new ArrayList<>();
-        mp3sByAlbum.forEachOrdered(mp3 -> mp3DTOs.add(convert(mp3)));
-        log.debug("for '{}' {} mp3s found", albumDTO, mp3DTOs.size());
-
         // generate the cover path
-        String cover = pathService.coverName(albumDTO);
+        String cover = coversPathService.name(albumDTO);
 
-        return new MP3FolderDTO(albumDTO, mp3DTOs, cover);
+        // get all the mp3 on the album folders
+        Map<String, List<MP3DTO>> cdMP3Map = getCDMP3ByAlbum(albumDTO);
+
+        return new MP3FolderDTO(albumDTO, cover, cdMP3Map);
     }
 
-    // UTIL
+    private Map<String, List<MP3DTO>> getCDMP3ByAlbum(AlbumDTO albumDTO) {
+        // get all the mp3 on the album folders
+        Map<String, List<String>> cdMP3Map = mp3PathService.allByAlbum(albumDTO);
 
-    @SneakyThrows
+        Map<String, List<MP3DTO>> cdMP3DTOMap = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> cdMP3Entry : cdMP3Map.entrySet()) {
+            String cd = cdMP3Entry.getKey();
+            List<String> mp3s = cdMP3Entry.getValue();
+
+            // convert
+            List<MP3DTO> mp3DTOs = new ArrayList<>();
+            mp3s.forEach(mp3 -> mp3DTOs.add(convert(mp3)));
+            log.debug("for '{}' CD '{}' {} mp3s found", albumDTO, cd, mp3DTOs.size());
+
+            cdMP3DTOMap.put(cd, mp3DTOs);
+        }
+
+        return cdMP3DTOMap;
+    }
+
     private MP3DTO convert(String mp3) {
-        Mp3File mp3File = new Mp3File(mp3);
+        log.debug("convert({})", mp3);
 
-        // debug
-        mp3Util.debug(mp3File);
+        try {
+            Mp3File mp3File = new Mp3File(mp3);
 
-        // add to list
-        return convert(mp3File);
+            // FIXME normalizer
+            // mp3Util.debug(mp3File);
+            // mp3Normalizer.check(cdMP3Map, albumDTO);
+
+            // add to list
+            return convert(mp3File);
+        } catch (Exception e) {
+            return new MP3DTO(mp3);
+        }
     }
 
     private MP3DTO convert(Mp3File mp3File) {

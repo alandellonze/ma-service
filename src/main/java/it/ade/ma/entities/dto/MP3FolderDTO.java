@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -12,7 +13,7 @@ import java.util.List;
 public class MP3FolderDTO {
 
     private AlbumDTO album;
-    private List<MP3DTO> mp3s;
     private String cover;
+    private Map<String, List<MP3DTO>> cdMP3Map;
 
 }

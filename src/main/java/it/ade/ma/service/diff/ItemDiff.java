@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class ItemDiffService extends AbstractDiffService<ItemDiffDTO> {
+public class ItemDiff extends Diff<ItemDiffDTO> {
 
     @Override
     protected void emptyAction(DiffResult<ItemDiffDTO> diffResult, List<ItemDiffDTO> original) {

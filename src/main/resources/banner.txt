@@ -12,11 +12,14 @@ metal-archives
   url                 : ${ma.metal-archives.url}
 path
   root                : ${ma.path.root}
-  covers              : ${ma.path.covers}
   mp3                 : ${ma.path.mp3}
+  mp3Tmp              : ${ma.path.mp3Tmp}
+  covers              : ${ma.path.covers}
+  coversTmp           : ${ma.path.coversTmp}
   scans               : ${ma.path.scans}
-  tmp
-    covers            : ${ma.path.tmp.covers}
-    mp3               : ${ma.path.tmp.mp3}
-    scans             : ${ma.path.tmp.scans}
+  scansTmp            : ${ma.path.scansTmp}
+mail
+  from                : ${ma.mail.from}
+  fromName            : ${ma.mail.fromName}
+  to                  : ${ma.mail.to}
 =======================================================================================================================================

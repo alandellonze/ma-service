@@ -14,7 +14,7 @@ import static it.ade.ma.service.diff.model.DiffRow.DiffType.*;
 import static java.util.Collections.singletonList;
 
 @Slf4j
-public abstract class AbstractDiffService<T> {
+public abstract class Diff<T> {
 
     private final BiPredicate<T, T> defaultEqualizer = Object::equals;
 

@@ -1,9 +1,15 @@
 package it.ade.ma.entities.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class MP3DTO {
+
+    public MP3DTO(String fileName) {
+        this.fileName = fileName;
+    }
 
     private String fileName;
     private String duration;

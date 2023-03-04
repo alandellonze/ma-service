@@ -14,7 +14,7 @@ import static java.util.Collections.singletonList;
 
 @Slf4j
 @Component
-public class AlbumDiffService extends AbstractDiffService<AlbumDTO> {
+public class AlbumDiff extends Diff<AlbumDTO> {
 
     @Override
     protected void minusAction(DiffResult<AlbumDTO> diffResult, List<AlbumDTO> original) {

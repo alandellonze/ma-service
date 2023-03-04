@@ -7,7 +7,9 @@ import it.ade.ma.repository.BandRepository;
 import it.ade.ma.service.AlbumService;
 import it.ade.ma.service.diff.model.DiffResponse;
 import it.ade.ma.service.diff.model.DiffResult;
-import it.ade.ma.service.path.PathService;
+import it.ade.ma.service.path.CoversPathService;
+import it.ade.ma.service.path.MP3PathService;
+import it.ade.ma.service.path.ScansPathService;
 import it.ade.ma.service.ripper.RipperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +33,11 @@ public class DiffService {
 
     private final AlbumService albumService;
     private final RipperService ripperService;
-    private final AlbumDiffService albumDiffService;
-    private final ItemDiffService itemDiffService;
-    private final PathService pathService;
+    private final AlbumDiff albumDiff;
+    private final ItemDiff itemDiff;
+    private final MP3PathService mp3PathService;
+    private final CoversPathService coversPathService;
+    private final ScansPathService scansPathService;
 
     public DiffResponse getDiff(long bandId) {
         log.info("getDiff({})", bandId);
@@ -62,29 +66,29 @@ public class DiffService {
 
         albums.forEach(album -> {
             // mp3 + tmp
-            String path = pathService.mp3Path(album);
+            String path = mp3PathService.path(album);
             if (exist(path)) {
                 album.setStatusMP3(PRESENT);
             } else {
-                path = pathService.mp3TmpPath(album);
+                path = mp3PathService.pathTmp(album);
                 album.setStatusMP3(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // cover + tmp
-            path = pathService.coverPath(album);
+            path = coversPathService.path(album);
             if (exist(path)) {
                 album.setStatusCover(PRESENT);
             } else {
-                path = pathService.coverTmpPath(album);
+                path = coversPathService.pathTmp(album);
                 album.setStatusCover(exist(path) ? TMP : NOT_PRESENT);
             }
 
             // scans
-            path = pathService.scansPath(album);
+            path = scansPathService.path(album);
             if (exist(path)) {
                 album.setStatusScans(PRESENT);
             } else {
-                path = pathService.scansTmpPath(album);
+                path = scansPathService.pathTmp(album);
                 album.setStatusScans(exist(path) ? TMP : NOT_PRESENT);
             }
         });
@@ -115,7 +119,7 @@ public class DiffService {
         List<AlbumDTO> albumsFromWeb = ripperService.execute(band.getId(), band.getMaKey());
 
         // diff album
-        return albumDiffService.execute(albums, albumsFromWeb);
+        return albumDiff.execute(albums, albumsFromWeb);
     }
 
     private DiffResult<ItemDiffDTO> diffMP3(String bandName, List<AlbumDTO> albums) {
@@ -127,12 +131,12 @@ public class DiffService {
                 .sorted().collect(toList());
 
         // get mp3 list from disk
-        List<ItemDiffDTO> mp3s = pathService.mp3sByBand(bandName)
+        List<ItemDiffDTO> mp3s = mp3PathService.allByBand(bandName)
                 .map(a -> new ItemDiffDTO(null, a))
                 .collect(toList());
 
         // diff mp3
-        return itemDiffService.execute(albumsToString, mp3s);
+        return itemDiff.execute(albumsToString, mp3s);
     }
 
     private DiffResult<ItemDiffDTO> diffCovers(String bandName, List<AlbumDTO> albums) {
@@ -144,12 +148,12 @@ public class DiffService {
                 .sorted().collect(toList());
 
         // get cover files from disk
-        List<ItemDiffDTO> covers = pathService.coversByBand(bandName)
+        List<ItemDiffDTO> covers = coversPathService.allByBand(bandName)
                 .map(a -> new ItemDiffDTO(null, a))
                 .collect(toList());
 
         // diff covers
-        return itemDiffService.execute(albumsToString, covers);
+        return itemDiff.execute(albumsToString, covers);
     }
 
     private DiffResult<ItemDiffDTO> diffScans(String bandName, List<AlbumDTO> albums) {
@@ -161,12 +165,12 @@ public class DiffService {
                 .sorted().collect(toList());
 
         // get scan files from disk
-        List<ItemDiffDTO> scans = pathService.scansByBand(bandName)
+        List<ItemDiffDTO> scans = scansPathService.allByBand(bandName)
                 .map(a -> new ItemDiffDTO(null, a))
                 .collect(toList());
 
         // diff scans
-        return itemDiffService.execute(albumsToString, scans);
+        return itemDiff.execute(albumsToString, scans);
     }
 
 }
