@@ -22,4 +22,8 @@ public class MP3DTO {
     private String year;
     private int genre;
 
+    private boolean id3v1TagPresent;
+    private boolean id3v2TagPresent;
+    private boolean customTagPresent;
+
 }
