@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static it.ade.ma.service.mp3.MP3Util.createID3v2Template;
 import static it.ade.ma.service.path.FileService.exist;
+import static java.lang.String.format;
 import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Paths.get;
 import static java.util.stream.Collectors.toMap;
@@ -76,16 +77,15 @@ public class MP3Service {
 
         // convert all the mp3s
         for (int i = 0; i < mp3s.size(); i++) {
-            mp3DTOs.add(convert(id3v2Template, i + 1, mp3s.get(i)));
+            id3v2Template.setTrack(format("%02d", i + 1));
+            mp3DTOs.add(convert(id3v2Template, mp3s.get(i)));
         }
         log.debug("for '{}' CD '{}' {} mp3s found", albumDTO, cd, mp3DTOs.size());
 
         return mp3DTOs;
     }
 
-    private MP3DTO convert(ID3v2 id3v2Template, int position, String mp3) {
-        log.debug("convert({}, {}, {})", id3v2Template, position, mp3);
-
+    private MP3DTO convert(ID3v2 id3v2Template, String mp3) {
         try {
             Mp3File mp3File = new Mp3File(mp3);
 
@@ -93,7 +93,7 @@ public class MP3Service {
             MP3DTO mp3DTO = convert(mp3File);
 
             // normalizer
-            mp3Normalizer.apply(id3v2Template, position, mp3File, mp3DTO);
+            mp3Normalizer.check(id3v2Template, mp3File, mp3DTO);
 
             return mp3DTO;
         } catch (Exception e) {

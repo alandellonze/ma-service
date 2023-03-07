@@ -5,6 +5,10 @@ import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.Mp3File;
 import it.ade.ma.entities.dto.AlbumDTO;
 
+import static java.util.Arrays.*;
+
+import java.util.List;
+
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.text.WordUtils.capitalize;
 
@@ -13,6 +17,35 @@ interface MP3Util {
     Integer MP3_TAG_DEFAULT_GENRE = 9;
     String MP3_TAG_DEFAULT_GENRE_DESCRIPTION = "Metal";
     String MP3_TAG_COVER_MIME = "image/jpeg";
+
+    List<String> MP3_TAG_FIELDS_TO_BE_CLEARED = asList(
+            "BPM",
+            "Grouping",
+            "Key",
+            "Date",
+            "Composer",
+            "Publisher",
+            "OriginalArtist",
+            "AlbumArtist",
+            "Copyright",
+            "ArtistUrl",
+            "CommercialUrl",
+            "CopyrightUrl",
+            "AudiofileUrl",
+            "AudioSourceUrl",
+            "RadiostationUrl",
+            "PaymentUrl",
+            "PublisherUrl",
+            "Url",
+            "PartOfSet",
+            "Compilation",
+            "Chapters",
+            "ChapterTOC",
+            "Encoder",
+            "WmpRating",
+            "ItunesComment",
+            "Lyrics"
+    );
 
     static ID3v2 createID3v2Template(AlbumDTO album, byte[] cover, String cd) {
         // create the id3v2 template

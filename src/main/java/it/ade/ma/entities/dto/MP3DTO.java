@@ -20,10 +20,20 @@ public class MP3DTO {
     private String title;
     private String album;
     private String year;
-    private int genre;
+    private Integer genre;
+    private String genreDescription;
 
-    private boolean id3v1TagPresent;
-    private boolean id3v2TagPresent;
-    private boolean customTagPresent;
+    private boolean issueId3v1Tag;
+    private boolean issueId3v2Tag;
+    private boolean issueCustomTag;
+
+    private String okArtist;
+    private String okTrack;
+    private String okTitle;
+    private String okAlbum;
+    private String okYear;
+    private Integer okGenre;
+    private String okGenreDescription;
+    private String itemsToBeCleared;
 
 }

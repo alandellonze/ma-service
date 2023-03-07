@@ -5,11 +5,13 @@ import com.mpatric.mp3agic.Mp3File;
 import it.ade.ma.entities.dto.MP3DTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import static it.ade.ma.service.mp3.MP3Util.extractTitleFromMp3File;
-import static it.ade.ma.service.mp3.MP3Util.normalizeTitle;
+import java.util.Objects;
+
+import static it.ade.ma.service.mp3.MP3Util.*;
+import static it.ade.ma.util.ReflectionUtil.getValue;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
 @Component
@@ -18,28 +20,28 @@ class MP3Normalizer {
 
     private final MP3Debugger mp3Debugger;
 
-    public void apply(ID3v2 id3v2Template, int position, Mp3File mp3File, MP3DTO mp3DTO) {
-        log.info("apply(id3v2Template, {}, {}, {})", position, mp3File.getFilename(), mp3DTO);
+    public void check(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
+        log.info("check(id3v2Template, mp3File, {})", mp3DTO);
 
         try {
             // debug mp3File
-            mp3Debugger.debugMp3File(mp3File);
+            // mp3Debugger.debugMp3File(mp3File);
 
             // id3v1 tag
-            mp3DTO.setId3v1TagPresent(mp3File.hasId3v1Tag());
-            mp3Debugger.debugID3v1(mp3File);
+            // mp3Debugger.debugID3v1(mp3File);
+            mp3DTO.setIssueId3v1Tag(mp3File.hasId3v1Tag());
             // FIXME mp3File.removeId3v1Tag();
 
             // id3v2 tag
-            mp3DTO.setId3v2TagPresent(mp3File.hasId3v2Tag());
-            mp3Debugger.debugID3v2(mp3File);
-            apply(id3v2Template, position, mp3File);
+            // mp3Debugger.debugID3v2(mp3File);
+            mp3DTO.setIssueId3v2Tag(mp3File.hasId3v2Tag());
+            checkId3v2(id3v2Template, mp3File, mp3DTO);
             // FIXME mp3File.removeId3v2Tag();
             // FIXME mp3File.setId3v2Tag(id3v2Template);
 
             // custom tag
-            mp3DTO.setCustomTagPresent(mp3File.hasCustomTag());
-            mp3Debugger.debugCustomTag(mp3File);
+            // mp3Debugger.debugCustomTag(mp3File);
+            mp3DTO.setIssueCustomTag(mp3File.hasCustomTag());
             // FIXME mp3File.removeCustomTag();
 
             // FIXME save and normalize file name
@@ -49,44 +51,42 @@ class MP3Normalizer {
         }
     }
 
-    private void apply(ID3v2 id3v2Template, int position, Mp3File mp3File) {
-        // FIXME apply method
-        ID3v2 tag = null;
+    private void checkId3v2(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
+        // check title and cover
+        mp3DTO.setOkTitle(checkTitle(mp3File));
+        // FIXME checkCover
+        checkCover(id3v2Template, mp3File.getId3v2Tag());
+
+        // check main fields
+        mp3DTO.setOkArtist((String) checkItem(id3v2Template, mp3File, "artist"));
+        mp3DTO.setOkTrack((String) checkItem(id3v2Template, mp3File, "track"));
+        mp3DTO.setOkAlbum((String) checkItem(id3v2Template, mp3File, "album"));
+        mp3DTO.setOkYear((String) checkItem(id3v2Template, mp3File, "year"));
+        mp3DTO.setOkGenre((Integer) checkItem(id3v2Template, mp3File, "genre"));
+        mp3DTO.setOkGenreDescription((String) checkItem(id3v2Template, mp3File, "genreDescription"));
+
+        // check other fields
         if (mp3File.hasId3v2Tag()) {
-            tag = mp3File.getId3v2Tag();
-
-            // log changes
-            fieldsToBeChanged(tag, id3v2Template);
+            mp3DTO.setItemsToBeCleared(checkItemsToBeCleared(mp3File));
         }
-
-        // normalize track
-        track(position, id3v2Template, tag);
-
-        // normalize title
-        title(mp3File, id3v2Template, tag);
     }
 
-    private void fieldsToBeChanged(ID3v2 id3v2Tag, ID3v2 id3v2Template) {
-        if (id3v2Tag.getArtist() == null || !id3v2Tag.getArtist().equals(id3v2Template.getArtist())) {
-            log.info("Artist to be changed: {} => {}", id3v2Tag.getArtist(), id3v2Template.getArtist());
-        }
+    private String checkTitle(Mp3File mp3File) {
+        // format titles
+        String originalTitle = mp3File.getId3v2Tag() == null ? null : mp3File.getId3v2Tag().getTitle();
+        String title = normalizeTitle(isNotBlank(originalTitle) ? originalTitle : extractTitleFromMp3File(mp3File));
 
-        if (id3v2Tag.getAlbum() == null || !id3v2Tag.getAlbum().equals(id3v2Template.getAlbum())) {
-            log.info("Album to be changed: {} => {}", id3v2Tag.getAlbum(), id3v2Template.getAlbum());
+        // compare them
+        if (Objects.equals(originalTitle, title)) {
+            return null;
+        } else {
+            log.info("to be changed Title: '{}' => '{}'", originalTitle, title);
+            return title;
         }
+    }
 
-        if (id3v2Tag.getYear() == null || !id3v2Tag.getYear().equals(id3v2Template.getYear())) {
-            log.info("Year to be changed: {} => {}", id3v2Tag.getYear(), id3v2Template.getYear());
-        }
-
-        if (id3v2Tag.getGenre() != id3v2Template.getGenre()) {
-            log.info("Genre to be changed: {} => {}", id3v2Tag.getGenre(), id3v2Template.getGenre());
-        }
-
-        if (id3v2Tag.getGenreDescription() == null || !id3v2Tag.getGenreDescription().equals(id3v2Template.getGenreDescription())) {
-            log.info("GenreDescription to be changed: {} => {}", id3v2Tag.getGenreDescription(), id3v2Template.getGenreDescription());
-        }
-
+    private void checkCover(ID3v2 id3v2Template, ID3v2 id3v2Tag) {
+        // FIXME
         byte[] albumImageData = id3v2Tag.getAlbumImage();
         byte[] albumImageDataTemplate = id3v2Template.getAlbumImage();
         if (albumImageData != null) {
@@ -100,77 +100,44 @@ class MP3Normalizer {
                 log.info("AlbumImage to be set: {}, {}", id3v2Template.getAlbumImage().length, id3v2Template.getAlbumImageMimeType());
             }
         }
+    }
 
-        if (id3v2Tag.getAlbumArtist() != null) {
-            log.info("AlbumArtist to be changed: {} => TO EMPTY", id3v2Tag.getAlbumArtist());
-        }
+    private Object checkItem(ID3v2 id3v2Template, Mp3File mp3File, String fieldName) {
+        // get values
+        Object original = mp3File.getId3v2Tag() == null ? null : getValue(mp3File.getId3v2Tag(), fieldName);
+        Object revised = getValue(id3v2Template, fieldName);
 
-        if (id3v2Tag.getComment() != null) {
-            log.info("Comment to be changed: {} => TO EMPTY", id3v2Tag.getComment());
-        }
-
-        if (id3v2Tag.getComposer() != null) {
-            log.info("Composer to be changed: {} => TO EMPTY", id3v2Tag.getComposer());
-        }
-
-        if (id3v2Tag.getCopyright() != null) {
-            log.info("Copyright to be changed: {} => TO EMPTY", id3v2Tag.getCopyright());
-        }
-
-        if (id3v2Tag.getEncoder() != null) {
-            log.info("Encoder to be changed: {} => TO EMPTY", id3v2Tag.getEncoder());
-        }
-
-        if (id3v2Tag.getLyrics() != null) {
-            log.info("Lyrics to be changed: {} => TO EMPTY", id3v2Tag.getLyrics());
-        }
-
-        if (id3v2Tag.getOriginalArtist() != null) {
-            log.info("OriginalArtist to be changed: {} => TO EMPTY", id3v2Tag.getOriginalArtist());
-        }
-
-        if (id3v2Tag.getPublisher() != null) {
-            log.info("Publisher to be changed: {} => TO EMPTY", id3v2Tag.getPublisher());
-        }
-
-        if (id3v2Tag.getUrl() != null) {
-            log.info("Url to be changed: {} => TO EMPTY", id3v2Tag.getUrl());
+        // compare them
+        if (Objects.equals(original, revised)) {
+            return null;
+        } else {
+            log.info("to be changed {}: '{}' => '{}'", fieldName, original, revised);
+            return revised;
         }
     }
 
-    private void track(int position, ID3v2 id3v2Template, ID3v2 id3v2Tag) {
-        // get original track
-        String originalTrack = id3v2Tag == null ? null : id3v2Tag.getTrack();
-
-        // prepare track
-        String track = String.format("%02d", position);
-
-        // log changes
-        if (!track.equals(originalTrack)) {
-            log.info("Track to be changed: {} => {}", originalTrack, track);
-        }
-
-        // set track to template
-        id3v2Template.setTrack(track);
+    private String checkItemsToBeCleared(Mp3File mp3File) {
+        StringBuilder itemsToBeCleared = new StringBuilder();
+        MP3_TAG_FIELDS_TO_BE_CLEARED.forEach(fieldName -> {
+            Object value = checkItemToBeCleared(mp3File, fieldName);
+            if (value != null) {
+                itemsToBeCleared.append(fieldName).append("=").append(value).append("<br/>");
+            }
+        });
+        return itemsToBeCleared.toString();
     }
 
-    private void title(Mp3File mp3File, ID3v2 id3v2Template, ID3v2 id3v2Tag) {
-        // get original title
-        String originalTitle = id3v2Tag == null ? null : id3v2Tag.getTitle();
+    private Object checkItemToBeCleared(Mp3File mp3File, String fieldName) {
+        // get values
+        Object original = mp3File.getId3v2Tag() == null ? null : getValue(mp3File.getId3v2Tag(), fieldName);
 
-        // get title from original tag or from file name
-        String title = StringUtils.isNotBlank(originalTitle) ? originalTitle : extractTitleFromMp3File(mp3File);
-
-        // normalize title
-        title = normalizeTitle(title);
-
-        // log changes
-        if (!title.equals(originalTitle)) {
-            log.info("Title to be changed: {} => {}", originalTitle, title);
+        // compare them
+        if (original == null) {
+            return null;
+        } else {
+            log.info("to be changed {}: '{}' => TO EMPTY", fieldName, original);
+            return original;
         }
-
-        // set title to template
-        id3v2Template.setTitle(title);
     }
 
 }

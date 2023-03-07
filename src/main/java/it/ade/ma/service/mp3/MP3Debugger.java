@@ -18,15 +18,14 @@ class MP3Debugger {
     }
 
     void debugID3v1(Mp3File mp3File) {
-        debugID3v1(mp3File, "v1");
-    }
-
-    private void debugID3v1(Mp3File mp3File, String prefix) {
         if (!mp3File.hasId3v1Tag()) {
             return;
         }
 
-        ID3v1 tag = mp3File.getId3v1Tag();
+        debugID3v1(mp3File.getId3v1Tag(), "v1");
+    }
+
+    private void debugID3v1(ID3v1 tag, String prefix) {
         log.debug("{} Artist: {}", prefix, tag.getArtist());
         log.debug("{} Track: {}", prefix, tag.getTrack());
         log.debug("{} Title: {}", prefix, tag.getTitle());
@@ -42,10 +41,11 @@ class MP3Debugger {
             return;
         }
 
-        String prefix = "v2";
-        debugID3v1(mp3File, prefix);
-
         ID3v2 tag = mp3File.getId3v2Tag();
+        String prefix = "v2";
+
+        debugID3v1(tag, prefix);
+
         log.debug("{} Padding: {}", prefix, tag.getPadding());
         log.debug("{} Footer {}", prefix, tag.hasFooter());
         log.debug("{} Unsynchronisation {}", prefix, tag.hasUnsynchronisation());
