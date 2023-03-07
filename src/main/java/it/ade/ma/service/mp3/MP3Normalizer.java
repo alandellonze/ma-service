@@ -8,9 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static it.ade.ma.service.mp3.MP3Util.*;
 import static it.ade.ma.util.ReflectionUtil.getValue;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
@@ -52,10 +55,13 @@ class MP3Normalizer {
     }
 
     private void checkId3v2(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
-        // check title and cover
+        // check title
         mp3DTO.setOkTitle(checkTitle(mp3File));
-        // FIXME checkCover
-        checkCover(id3v2Template, mp3File.getId3v2Tag());
+
+        // check title and cover
+        Optional<byte[]> coverOpt = checkCover(id3v2Template, mp3File);
+        mp3DTO.setIssueCover(coverOpt.isPresent());
+        coverOpt.ifPresent(mp3DTO::setOriginalCover);
 
         // check main fields
         mp3DTO.setOkArtist((String) checkItem(id3v2Template, mp3File, "artist"));
@@ -72,34 +78,40 @@ class MP3Normalizer {
     }
 
     private String checkTitle(Mp3File mp3File) {
-        // format titles
-        String originalTitle = mp3File.getId3v2Tag() == null ? null : mp3File.getId3v2Tag().getTitle();
-        String title = normalizeTitle(isNotBlank(originalTitle) ? originalTitle : extractTitleFromMp3File(mp3File));
+        // get values
+        String original = mp3File.getId3v2Tag() == null ? null : mp3File.getId3v2Tag().getTitle();
+        String revised = normalizeTitle(isNotBlank(original) ? original : extractTitleFromMp3File(mp3File));
 
         // compare them
-        if (Objects.equals(originalTitle, title)) {
+        if (Objects.equals(original, revised)) {
             return null;
         } else {
-            log.info("to be changed Title: '{}' => '{}'", originalTitle, title);
-            return title;
+            log.info("to be changed Title: '{}' => '{}'", original, revised);
+            return revised;
         }
     }
 
-    private void checkCover(ID3v2 id3v2Template, ID3v2 id3v2Tag) {
-        // FIXME
-        byte[] albumImageData = id3v2Tag.getAlbumImage();
-        byte[] albumImageDataTemplate = id3v2Template.getAlbumImage();
-        if (albumImageData != null) {
-            if (albumImageDataTemplate != null) {
-                if (albumImageData.length != albumImageDataTemplate.length || !id3v2Tag.getAlbumImageMimeType().equals(id3v2Template.getAlbumImageMimeType())) {
-                    log.info("AlbumImage to be changed: {}, {} => {}, {}", id3v2Tag.getAlbumImage().length, id3v2Tag.getAlbumImageMimeType(), id3v2Template.getAlbumImage().length, id3v2Template.getAlbumImageMimeType());
-                }
-            }
-        } else {
-            if (albumImageDataTemplate != null) {
-                log.info("AlbumImage to be set: {}, {}", id3v2Template.getAlbumImage().length, id3v2Template.getAlbumImageMimeType());
-            }
+    private Optional<byte[]> checkCover(ID3v2 id3v2Template, Mp3File mp3File) {
+        // original file has no cover
+        byte[] original = mp3File.getId3v2Tag() == null ? null : mp3File.getId3v2Tag().getAlbumImage();
+        if (original == null) {
+            return of(new byte[0]);
         }
+
+        // standard cover is not present
+        byte[] revised = id3v2Template.getAlbumImage();
+        if (revised == null) {
+            return of(original);
+        }
+
+        // cover is different
+        if (original.length != revised.length || !Objects.equals(id3v2Template.getAlbumImageMimeType(), mp3File.getId3v2Tag().getAlbumImageMimeType())) {
+            log.info("to be changed AlbumImage: {} ({}) => {} ({})", original.length, mp3File.getId3v2Tag().getAlbumImageMimeType(), revised.length, id3v2Template.getAlbumImageMimeType());
+            return of(original);
+        }
+
+        // cover is the same
+        return empty();
     }
 
     private Object checkItem(ID3v2 id3v2Template, Mp3File mp3File, String fieldName) {

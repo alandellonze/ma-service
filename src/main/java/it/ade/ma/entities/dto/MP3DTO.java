@@ -27,6 +27,9 @@ public class MP3DTO {
     private boolean issueId3v2Tag;
     private boolean issueCustomTag;
 
+    private boolean issueCover;
+    private byte[] originalCover;
+
     private String okArtist;
     private String okTrack;
     private String okTitle;

@@ -19,7 +19,6 @@ interface MP3Util {
     String MP3_TAG_COVER_MIME = "image/jpeg";
 
     List<String> MP3_TAG_FIELDS_TO_BE_CLEARED = asList(
-            "BPM",
             "Grouping",
             "Key",
             "Date",
@@ -38,11 +37,9 @@ interface MP3Util {
             "PublisherUrl",
             "Url",
             "PartOfSet",
-            "Compilation",
             "Chapters",
             "ChapterTOC",
             "Encoder",
-            "WmpRating",
             "ItunesComment",
             "Lyrics"
     );
