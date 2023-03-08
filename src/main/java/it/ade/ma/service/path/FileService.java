@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import static java.lang.String.join;
 import static java.nio.file.Files.*;
 import static java.nio.file.Paths.get;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Stream.concat;
@@ -86,6 +87,15 @@ public abstract class FileService {
     @SneakyThrows
     public static byte[] loadFile(String path) {
         return exist(path) ? readAllBytes(get(path)) : null;
+    }
+
+    @SneakyThrows
+    public static void renameFile(String source, String target, String targetRenamed) {
+        Path targetPath = get(target);
+        move(get(source), targetPath, REPLACE_EXISTING);
+        if (targetRenamed != null) {
+            move(targetPath, get(targetRenamed), REPLACE_EXISTING);
+        }
     }
 
 }

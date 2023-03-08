@@ -4,10 +4,7 @@ import it.ade.ma.entities.dto.MP3FolderDTO;
 import it.ade.ma.service.mp3.MP3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.ResponseEntity.ok;
 
@@ -20,7 +17,12 @@ public class MP3Controller {
 
     @GetMapping("/{albumId}")
     public ResponseEntity<MP3FolderDTO> loadFolder(@PathVariable long albumId) {
-        return ok().body(mp3Service.loadFolder(albumId));
+        return ok().body(mp3Service.loadFolder(albumId, false));
+    }
+
+    @PostMapping("/{albumId}")
+    public ResponseEntity<MP3FolderDTO> applyChanges(@PathVariable long albumId) {
+        return ok().body(mp3Service.loadFolder(albumId, true));
     }
 
 }

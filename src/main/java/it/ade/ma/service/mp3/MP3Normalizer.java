@@ -3,7 +3,9 @@ package it.ade.ma.service.mp3;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
 import it.ade.ma.entities.dto.MP3DTO;
+import it.ade.ma.util.ConverterUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -12,51 +14,53 @@ import java.util.Optional;
 
 import static it.ade.ma.service.mp3.MP3Util.MP3_TAG_FIELDS_TO_BE_CLEARED;
 import static it.ade.ma.service.mp3.MP3Util.normalizeTitle;
+import static it.ade.ma.service.path.FileService.renameFile;
 import static it.ade.ma.service.path.MP3PathService.*;
 import static it.ade.ma.util.ReflectionUtil.getValue;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.springframework.beans.BeanUtils.copyProperties;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 class MP3Normalizer {
 
-    private final MP3Debugger mp3Debugger;
+    private final ConverterUtil converterUtil;
 
-    public void check(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
-        log.info("check(id3v2Template, mp3File, {})", mp3DTO);
+    MP3DTO checkAndApply(ID3v2 id3v2Template, String mp3, boolean apply) {
+        log.info("checkAndApply(id3v2Template, {}, apply: {})", mp3, apply);
 
-        try {
-            // debug mp3File
-            // mp3Debugger.debugMp3File(mp3File);
-
-            // id3v1 tag
-            // mp3Debugger.debugID3v1(mp3File);
-            mp3DTO.setIssueId3v1Tag(mp3File.hasId3v1Tag());
-            // FIXME mp3File.removeId3v1Tag();
-
-            // id3v2 tag
-            // mp3Debugger.debugID3v2(mp3File);
-            mp3DTO.setIssueId3v2Tag(mp3File.hasId3v2Tag());
-            checkId3v2(id3v2Template, mp3File, mp3DTO);
-            // FIXME mp3File.removeId3v2Tag();
-            // FIXME mp3File.setId3v2Tag(id3v2Template);
-
-            // custom tag
-            // mp3Debugger.debugCustomTag(mp3File);
-            mp3DTO.setIssueCustomTag(mp3File.hasCustomTag());
-            // FIXME mp3File.removeCustomTag();
-
-            // FIXME save and normalize file name
-            // FIXME updateMP3File(mp3File);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        // apply the default changes
+        if (apply) {
+            mp3 = apply(id3v2Template, mp3);
         }
+
+        // check the file
+        return check(id3v2Template, mp3);
     }
 
-    private void checkId3v2(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
+    @SneakyThrows
+    private MP3DTO check(ID3v2 id3v2Template, String mp3) {
+        Mp3File mp3File = new Mp3File(mp3);
+
+        // check id3v2 tag
+        MP3DTO mp3DTO = checkId3v2(id3v2Template, mp3File);
+        mp3DTO.setIssueId3v2Tag(!mp3File.hasId3v2Tag());
+
+        // check id3v1 tag
+        mp3DTO.setIssueId3v1Tag(mp3File.hasId3v1Tag());
+
+        // check custom tag
+        mp3DTO.setIssueCustomTag(mp3File.hasCustomTag());
+
+        return mp3DTO;
+    }
+
+    private MP3DTO checkId3v2(ID3v2 id3v2Template, Mp3File mp3File) {
+        MP3DTO mp3DTO = convert(mp3File);
+
         // check filename
         mp3DTO.setOkFilename(checkFilename(id3v2Template, mp3File));
 
@@ -80,6 +84,17 @@ class MP3Normalizer {
         if (mp3File.hasId3v2Tag()) {
             mp3DTO.setItemsToBeCleared(checkItemsToBeCleared(mp3File));
         }
+
+        return mp3DTO;
+    }
+
+    private MP3DTO convert(Mp3File mp3File) {
+        MP3DTO mp3DTO = new MP3DTO();
+        mp3DTO.setFileName(mp3File.getFilename());
+        mp3DTO.setDuration(converterUtil.mmss(mp3File.getLengthInMilliseconds()));
+        mp3DTO.setBitrate(mp3File.getBitrate());
+        copyProperties(mp3File.getId3v2Tag(), mp3DTO);
+        return mp3DTO;
     }
 
     private String checkFilename(ID3v2 id3v2Template, Mp3File mp3File) {
@@ -169,6 +184,62 @@ class MP3Normalizer {
             log.info("to be changed {}: '{}' => TO EMPTY", fieldName, original);
             return original;
         }
+    }
+
+    @SneakyThrows
+    private String apply(ID3v2 id3v2Template, String mp3) {
+        Mp3File mp3File = new Mp3File(mp3);
+        boolean isToBeUpdated = false;
+
+        // id3v2 tag
+        MP3DTO mp3DTO = checkId3v2(id3v2Template, mp3File);
+        if (mp3DTO.haveId3v2TagChanges()) {
+            if (mp3File.hasId3v2Tag()) {
+                log.info("removeId3v2Tag");
+                mp3File.removeId3v2Tag();
+            }
+
+            // fill the template with the oks
+            id3v2Template.setTitle(mp3DTO.getOkTitle() != null ? mp3DTO.getOkTitle() : mp3DTO.getTitle());
+
+            log.info("setId3v2Tag");
+            mp3File.setId3v2Tag(id3v2Template);
+            isToBeUpdated = true;
+        }
+
+        // id3v1 tag
+        if (mp3File.hasId3v1Tag()) {
+            log.info("removeId3v1Tag");
+            mp3File.removeId3v1Tag();
+            isToBeUpdated = true;
+        }
+
+        // custom tag
+        if (mp3File.hasCustomTag()) {
+            log.info("removeCustomTag");
+            mp3File.removeCustomTag();
+            isToBeUpdated = true;
+        }
+
+        // save the file when required
+        return isToBeUpdated ? updateMP3File(mp3File, mp3DTO.getOkFilename()) : mp3;
+    }
+
+    @SneakyThrows
+    private String updateMP3File(Mp3File mp3File, String normalizedFileName) {
+        log.info("updateMP3File(mp3File={}, {})", mp3File.getFilename(), normalizedFileName);
+
+        // prepare file names
+        String filename = mp3File.getFilename();
+        String filenameTmp = filename + "_TMP";
+        String normalizedPath = normalizedFileName == null ? null : extractFilePath(filename) + normalizedFileName;
+
+        // save the mp3 and rename the file
+        mp3File.save(filenameTmp);
+        renameFile(filenameTmp, filename, normalizedPath);
+
+        // return the renamed file name
+        return normalizedPath == null ? filename : normalizedPath;
     }
 
 }

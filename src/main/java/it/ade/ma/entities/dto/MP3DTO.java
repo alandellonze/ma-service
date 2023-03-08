@@ -3,18 +3,15 @@ package it.ade.ma.entities.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static org.springframework.util.StringUtils.*;
+
 @Data
 @NoArgsConstructor
 public class MP3DTO {
 
-    public MP3DTO(String fileName) {
-        this.fileName = fileName;
-    }
-
     private String fileName;
     private String duration;
     private int bitrate;
-
     private String artist;
     private String track;
     private String title;
@@ -39,5 +36,22 @@ public class MP3DTO {
     private Integer okGenre;
     private String okGenreDescription;
     private String itemsToBeCleared;
+
+    public MP3DTO(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public boolean haveId3v2TagChanges() {
+        return issueCover
+                || okFilename != null
+                || okArtist != null
+                || okTrack != null
+                || okTitle != null
+                || okAlbum != null
+                || okYear != null
+                || okGenre != null
+                || okGenreDescription != null
+                || hasLength(itemsToBeCleared);
+    }
 
 }

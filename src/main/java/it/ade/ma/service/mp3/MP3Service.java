@@ -1,20 +1,16 @@
 package it.ade.ma.service.mp3;
 
 import com.mpatric.mp3agic.ID3v2;
-import com.mpatric.mp3agic.Mp3File;
 import it.ade.ma.entities.dto.AlbumDTO;
 import it.ade.ma.entities.dto.MP3DTO;
 import it.ade.ma.entities.dto.MP3FolderDTO;
 import it.ade.ma.service.AlbumService;
 import it.ade.ma.service.path.CoversPathService;
 import it.ade.ma.service.path.MP3PathService;
-import it.ade.ma.util.ConverterUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +18,9 @@ import static it.ade.ma.service.mp3.MP3Util.createID3v2Template;
 import static it.ade.ma.service.path.CoversPathService.name;
 import static it.ade.ma.service.path.FileService.loadFile;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.springframework.beans.BeanUtils.copyProperties;
+import static java.util.stream.IntStream.range;
 
 @Slf4j
 @Service
@@ -36,10 +33,8 @@ public class MP3Service {
 
     private final MP3Normalizer mp3Normalizer;
 
-    private final ConverterUtil converterUtil;
-
-    public MP3FolderDTO loadFolder(long albumId) {
-        log.info("loadFolder({})", albumId);
+    public MP3FolderDTO loadFolder(long albumId, boolean apply) {
+        log.info("loadFolder({}, apply: {})", albumId, apply);
 
         // get the album
         AlbumDTO albumDTO = albumService.findById(albumId);
@@ -49,63 +44,40 @@ public class MP3Service {
         String cover = name(albumDTO);
 
         // get all the mp3 on the album folders
-        Map<String, List<MP3DTO>> cdMP3Map = getCDMP3ByAlbum(albumDTO);
+        Map<String, List<MP3DTO>> cdMP3Map = getCDMP3ByAlbum(albumDTO, apply);
 
         return new MP3FolderDTO(albumDTO, cover, cdMP3Map);
     }
 
-    @SneakyThrows
-    private Map<String, List<MP3DTO>> getCDMP3ByAlbum(AlbumDTO albumDTO) {
-        // get all the mp3 on the album folders
-        Map<String, List<String>> cdMP3Map = mp3PathService.allByAlbum(albumDTO);
-
+    private Map<String, List<MP3DTO>> getCDMP3ByAlbum(AlbumDTO albumDTO, boolean apply) {
         // get cover path
         byte[] cover = loadFile(coversPathService.path(albumDTO));
 
         // convert all the cds and mp3s
-        return cdMP3Map.entrySet().stream()
-                .collect(toMap(Map.Entry::getKey, e -> convert(albumDTO, cover, e.getKey(), e.getValue())));
+        return mp3PathService.allByAlbum(albumDTO).entrySet().stream()
+                .collect(toMap(Map.Entry::getKey, e -> convertAll(albumDTO, cover, e.getKey(), e.getValue(), apply)));
     }
 
-    private List<MP3DTO> convert(AlbumDTO albumDTO, byte[] cover, String cd, List<String> mp3s) {
-        List<MP3DTO> mp3DTOs = new ArrayList<>();
-
+    private List<MP3DTO> convertAll(AlbumDTO albumDTO, byte[] cover, String cd, List<String> mp3s, boolean apply) {
         // create the id3 tag template
         ID3v2 id3v2Template = createID3v2Template(albumDTO, cover, cd);
 
         // convert all the mp3s
-        for (int i = 0; i < mp3s.size(); i++) {
-            id3v2Template.setTrack(format("%02d", i + 1));
-            mp3DTOs.add(convert(id3v2Template, mp3s.get(i)));
-        }
-        log.debug("for '{}' CD '{}' {} mp3s found", albumDTO, cd, mp3DTOs.size());
-
-        return mp3DTOs;
+        return range(0, mp3s.size())
+                .mapToObj(i -> convert(id3v2Template, i + 1, mp3s.get(i), apply))
+                .collect(toList());
     }
 
-    private MP3DTO convert(ID3v2 id3v2Template, String mp3) {
+    private MP3DTO convert(ID3v2 id3v2Template, int i, String mp3, boolean apply) {
         try {
-            Mp3File mp3File = new Mp3File(mp3);
+            // set the track
+            id3v2Template.setTrack(format("%02d", i));
 
-            // add to list
-            MP3DTO mp3DTO = convert(mp3File);
-
-            // normalizer
-            mp3Normalizer.check(id3v2Template, mp3File, mp3DTO);
-
-            return mp3DTO;
+            // normalize
+            return mp3Normalizer.checkAndApply(id3v2Template, mp3, apply);
         } catch (Exception e) {
             return new MP3DTO(mp3);
         }
-    }
-
-    private MP3DTO convert(Mp3File mp3File) {
-        MP3DTO mp3DTO = new MP3DTO();
-        mp3DTO.setFileName(mp3File.getFilename());
-        mp3DTO.setDuration(converterUtil.mmss(mp3File.getLengthInMilliseconds()));
-        mp3DTO.setBitrate(mp3File.getBitrate());
-        copyProperties(mp3File.getId3v2Tag(), mp3DTO);
-        return mp3DTO;
     }
 
 }

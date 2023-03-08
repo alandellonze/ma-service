@@ -61,6 +61,10 @@ public class MP3PathService {
         return emptyMap();
     }
 
+    public static String extractFilePath(String path) {
+        return path.substring(0, path.lastIndexOf("/") + 1);
+    }
+
     public static String extractFilename(String path) {
         String filename = path.substring(path.lastIndexOf("/") + 1);
         return filename.trim();
