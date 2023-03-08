@@ -30,6 +30,7 @@ public class MP3DTO {
     private boolean issueCover;
     private byte[] originalCover;
 
+    private String okFilename;
     private String okArtist;
     private String okTrack;
     private String okTitle;

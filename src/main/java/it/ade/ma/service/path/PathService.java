@@ -2,9 +2,17 @@ package it.ade.ma.service.path;
 
 import it.ade.ma.entities.dto.AlbumDTO;
 
+import java.util.List;
+
 import static java.lang.String.format;
+import static java.util.List.of;
 
 public interface PathService {
+
+    String MP3_FILE_EXTENSION = ".mp3";
+    List<String> MP3_EXCLUDE_LIST = of("- flac");
+
+    String COVER_FILE_EXTENSION = ".jpg";
 
     static String normalize(String name) {
         return name.replace(":", " -").replace("/", "-");
@@ -28,7 +36,7 @@ public interface PathService {
     }
 
     static String generateCoverName(AlbumDTO albumDTO) {
-        return generateAlbumName(albumDTO) + ".jpg";
+        return generateAlbumName(albumDTO) + COVER_FILE_EXTENSION;
     }
 
 }

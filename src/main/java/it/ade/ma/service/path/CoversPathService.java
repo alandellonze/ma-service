@@ -16,11 +16,11 @@ public class CoversPathService {
 
     private final PathConfiguration pathConfiguration;
 
-    public String name(AlbumDTO albumDTO) {
+    public static String name(AlbumDTO albumDTO) {
         return normalize(albumDTO.getBandName()) + "/" + generateCoverName(albumDTO);
     }
 
-    public String nameTmp(AlbumDTO albumDTO) {
+    public static String nameTmp(AlbumDTO albumDTO) {
         return name(albumDTO);
     }
 
@@ -38,7 +38,7 @@ public class CoversPathService {
     }
 
     private Stream<String> folderContent(String bandName) {
-        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getCovers() + "/" + normalize(bandName));
+        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getCovers() + normalize(bandName));
     }
 
 }

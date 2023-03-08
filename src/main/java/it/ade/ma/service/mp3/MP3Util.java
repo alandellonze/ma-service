@@ -65,14 +65,6 @@ interface MP3Util {
         return id3v2Template;
     }
 
-    static String extractTitleFromMp3File(Mp3File mp3File) {
-        String filename = mp3File.getFilename();
-        filename = filename.substring(filename.lastIndexOf("/") + 1);
-        filename = filename.substring(filename.indexOf("-") + 1);
-        filename = filename.substring(0, filename.indexOf(".mp3"));
-        return filename.trim();
-    }
-
     static String normalizeTitle(String title) {
         String normalizedTitle = capitalize(title);
 

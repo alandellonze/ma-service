@@ -16,11 +16,11 @@ public class ScansPathService {
 
     private final PathConfiguration pathConfiguration;
 
-    public String name(AlbumDTO albumDTO) {
+    public static String name(AlbumDTO albumDTO) {
         return normalize(albumDTO.getBandName()) + "/" + generateAlbumName(albumDTO);
     }
 
-    public String nameTmp(AlbumDTO albumDTO) {
+    public static String nameTmp(AlbumDTO albumDTO) {
         return name(albumDTO);
     }
 
@@ -38,7 +38,7 @@ public class ScansPathService {
     }
 
     private Stream<String> folderContent(String bandName) {
-        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getScans() + "/" + normalize(bandName));
+        return getFolderContent(pathConfiguration.getRoot() + pathConfiguration.getScans() + normalize(bandName));
     }
 
 }

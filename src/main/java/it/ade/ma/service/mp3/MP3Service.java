@@ -19,10 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import static it.ade.ma.service.mp3.MP3Util.createID3v2Template;
-import static it.ade.ma.service.path.FileService.exist;
+import static it.ade.ma.service.path.CoversPathService.name;
+import static it.ade.ma.service.path.FileService.loadFile;
 import static java.lang.String.format;
-import static java.nio.file.Files.readAllBytes;
-import static java.nio.file.Paths.get;
 import static java.util.stream.Collectors.toMap;
 import static org.springframework.beans.BeanUtils.copyProperties;
 
@@ -47,7 +46,7 @@ public class MP3Service {
         log.debug("{}", albumDTO);
 
         // generate the cover path
-        String cover = coversPathService.name(albumDTO);
+        String cover = name(albumDTO);
 
         // get all the mp3 on the album folders
         Map<String, List<MP3DTO>> cdMP3Map = getCDMP3ByAlbum(albumDTO);
@@ -61,8 +60,7 @@ public class MP3Service {
         Map<String, List<String>> cdMP3Map = mp3PathService.allByAlbum(albumDTO);
 
         // get cover path
-        String coverPath = coversPathService.path(albumDTO);
-        byte[] cover = exist(coverPath) ? readAllBytes(get(coverPath)) : null;
+        byte[] cover = loadFile(coversPathService.path(albumDTO));
 
         // convert all the cds and mp3s
         return cdMP3Map.entrySet().stream()

@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 import java.util.Optional;
 
-import static it.ade.ma.service.mp3.MP3Util.*;
+import static it.ade.ma.service.mp3.MP3Util.MP3_TAG_FIELDS_TO_BE_CLEARED;
+import static it.ade.ma.service.mp3.MP3Util.normalizeTitle;
+import static it.ade.ma.service.path.MP3PathService.*;
 import static it.ade.ma.util.ReflectionUtil.getValue;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -55,6 +57,9 @@ class MP3Normalizer {
     }
 
     private void checkId3v2(ID3v2 id3v2Template, Mp3File mp3File, MP3DTO mp3DTO) {
+        // check filename
+        mp3DTO.setOkFilename(checkFilename(id3v2Template, mp3File));
+
         // check title
         mp3DTO.setOkTitle(checkTitle(mp3File));
 
@@ -77,10 +82,24 @@ class MP3Normalizer {
         }
     }
 
+    private String checkFilename(ID3v2 id3v2Template, Mp3File mp3File) {
+        // get values
+        String original = extractFilename(mp3File.getFilename());
+        String revised = buildFilename(id3v2Template.getTrack(), normalizeTitle(extractTitleFromFilename(mp3File.getFilename())));
+
+        // compare them
+        if (Objects.equals(original, revised)) {
+            return null;
+        } else {
+            log.info("to be changed Filename: '{}' => '{}'", original, revised);
+            return revised;
+        }
+    }
+
     private String checkTitle(Mp3File mp3File) {
         // get values
         String original = mp3File.getId3v2Tag() == null ? null : mp3File.getId3v2Tag().getTitle();
-        String revised = normalizeTitle(isNotBlank(original) ? original : extractTitleFromMp3File(mp3File));
+        String revised = normalizeTitle(isNotBlank(original) ? original : extractTitleFromFilename(mp3File.getFilename()));
 
         // compare them
         if (Objects.equals(original, revised)) {
@@ -133,7 +152,7 @@ class MP3Normalizer {
         MP3_TAG_FIELDS_TO_BE_CLEARED.forEach(fieldName -> {
             Object value = checkItemToBeCleared(mp3File, fieldName);
             if (value != null) {
-                itemsToBeCleared.append(fieldName).append("=").append(value).append("<br/>");
+                itemsToBeCleared.append(fieldName).append("=").append(value).append(",");
             }
         });
         return itemsToBeCleared.toString();
